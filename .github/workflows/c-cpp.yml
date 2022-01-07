@@ -14,6 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: configure
-      run: ./premake.exe gmake2
+      run: ./premake5.exe gmake2
     - name: make
       run: make ./build/Makefile config=debug_win64 all
