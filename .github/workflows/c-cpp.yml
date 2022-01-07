@@ -13,7 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: setup msbuild
+      uses: microsoft/setup-msbuild@v1.1
     - name: configure
       run: ./premake5.exe gmake2
-    - name: make
-      run: make ./build/Makefile config=debug_win64 all
+    - name: build project
+      run: msbuild build/gta2ue.sln -p:Configuration="Debug" -p:Platform="Win64"
