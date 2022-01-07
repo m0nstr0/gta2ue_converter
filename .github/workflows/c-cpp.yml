@@ -20,4 +20,5 @@ jobs:
     - name: configure
       run: ./premake5.exe vs2022
     - name: build project
-      run: msbuild build/gta2ue.sln -p:Configuration="Debug" -p:Platform="Win64"
+      working-directory: build
+      run: msbuild gta2ue.sln -p:Configuration="Debug" -p:Platform="Win64"
