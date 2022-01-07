@@ -16,7 +16,6 @@ jobs:
     - name: setup msbuild
       uses: microsoft/setup-msbuild@v1.1
       with:
-        vs-version: '[17.0]'
         msbuild-architecture: x64
     - name: configure
       run: ./premake5.exe vs2022
