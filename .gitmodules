@@ -1,0 +1,20 @@
+[submodule "vendor/librw"]
+	path = vendor/librw
+	url = git@github.com:m0nstr0/librw.git
+	branch = master
+[submodule "vendor/librwgta"]
+	path = vendor/librwgta
+	url = git@github.com:m0nstr0/librwgta.git
+	branch = master
+[submodule "vendor/rapidjson"]
+	path = vendor/rapidjson
+	url = git@github.com:Tencent/rapidjson.git
+	branch = master
+[submodule "vendor/cxxopts"]
+	path = vendor/cxxopts
+	url = https://github.com/jarro2783/cxxopts.git
+	branch = master
+[submodule "vendor/glfw"]
+	path = vendor/glfw
+	url = git@github.com:glfw/glfw.git
+	branch = latest
