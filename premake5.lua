@@ -8,11 +8,11 @@ local function addSrcFiles( prefix )
 	return prefix .. "/*cpp", prefix .. "/*.h", prefix .. "/*.c", prefix .. "/*.ico", prefix .. "/*.rc"
 end
 
-workspace "gtavc2ue"
+workspace "gta2ue"
     language "C++"
     configurations {"Debug","Release"}
     platforms {"Win64"}
-    startproject "gtavc2ue"
+    startproject "gta2ue"
     location "build"
     symbols "Full"
     staticruntime "off"
@@ -113,11 +113,11 @@ workspace "gtavc2ue"
 
         filter {}
 
-    project "gtavc2ue"
+    project "gta2ue"
         kind "ConsoleApp"
         cppdialect "C++20"
         targetextension ".exe"
-        targetname "gtavc2ue"
+        targetname "gta2ue"
         targetdir "bin/%{cfg.system}-%{cfg.architecture}-%{cfg.buildcfg}"
         dependson "librwgta"
         staticruntime "off"
