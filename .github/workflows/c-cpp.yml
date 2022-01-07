@@ -15,7 +15,10 @@ jobs:
     - uses: actions/checkout@v2
     - name: setup msbuild
       uses: microsoft/setup-msbuild@v1.1
+      with:
+        vs-version: '[17.0]'
+        msbuild-architecture: x64
     - name: configure
-      run: ./premake5.exe gmake2
+      run: ./premake5.exe vs2022
     - name: build project
       run: msbuild build/gta2ue.sln -p:Configuration="Debug" -p:Platform="Win64"
