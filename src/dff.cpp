@@ -3,6 +3,21 @@
 #include <filesystem>
 #include <iostream>
 
+void parse_rw_frames(const rw::FrameList_& frame_list, gta_to_ue::Mesh& mesh_data)
+{
+    mesh_data.frames.reserve(frame_list.numFrames);
+    for (uint32_t i = 0; i < frame_list.numFrames; i++) {
+        mesh_data.frames.emplace_back(
+            gta_to_ue::Vector3f(frame_list.frames[i]->matrix.right.x, frame_list.frames[i]->matrix.right.y, frame_list.frames[i]->matrix.right.z), 
+            gta_to_ue::Vector3f(frame_list.frames[i]->matrix.at.x, frame_list.frames[i]->matrix.at.y, frame_list.frames[i]->matrix.at.z), 
+            gta_to_ue::Vector3f(frame_list.frames[i]->matrix.up.x, frame_list.frames[i]->matrix.up.y, frame_list.frames[i]->matrix.up.z), 
+            gta_to_ue::Vector3f(frame_list.frames[i]->matrix.pos.x, frame_list.frames[i]->matrix.pos.y, frame_list.frames[i]->matrix.pos.z),
+            rw::findPointer(frame_list.frames[i]->getParent(), reinterpret_cast<void**>(frame_list.frames), frame_list.numFrames),
+            gta::getNodeName(frame_list.frames[i])
+        );
+    }
+}
+
 size_t get_hash_for_material(const rw::Material* material)
 {
     if (!material) {
@@ -65,7 +80,7 @@ void parse_rw_materials(const rw::Geometry* geometry, gta_to_ue::Mesh& mesh_data
     }
 }
 
-bool parse_rw_geometry(const rw::Geometry* geometry, gta_to_ue::Mesh& mesh_data, std::string& filename)
+void parse_rw_geometry(const rw::Geometry* geometry, gta_to_ue::Mesh& mesh_data, const std::string& filename)
 {
     auto& mesh_geometry_data = mesh_data.geometries.emplace_back(
         geometry->meshHeader->totalIndices / 3,
@@ -117,8 +132,6 @@ bool parse_rw_geometry(const rw::Geometry* geometry, gta_to_ue::Mesh& mesh_data,
             }
         }
     }
-
-    return true;
 }
 
 rw::Clump* gta_to_ue::dff::parse(const std::string& dff_file_name, gta_to_ue::Mesh& mesh_data)
@@ -150,15 +163,24 @@ rw::Clump* gta_to_ue::dff::parse(const std::string& dff_file_name, gta_to_ue::Me
 
     stream_file.close();
 
+    //frames data
+    const rw::FrameList_ frame_list{
+        .numFrames = clump->getFrame()->count(),
+        .frames = static_cast<rw::Frame**>(rwMalloc(clump->getFrame()->count() * sizeof(rw::Frame*), rw::MEMDUR_FUNCTION | rw::ID_CLUMP))
+    };
+    rw::makeFrameList(clump->getFrame(), frame_list.frames);
+
+    //frames
+    parse_rw_frames(frame_list, mesh_data);
+
+    //atomics
     FORLIST(lnk, clump->atomics)
     {
         const rw::Atomic* atomic = rw::Atomic::fromClump(lnk);
-        if (atomic->object.object.flags & rw::Atomic::RENDER) {
-            if (!parse_rw_geometry(atomic->geometry, mesh_data, filename)) {
-                return nullptr;
-            }
-        }
+        parse_rw_geometry(atomic->geometry, mesh_data, filename);
+        mesh_data.atomics.emplace_back(mesh_data.geometries.size() - 1, rw::findPointer(atomic->getFrame(), reinterpret_cast<void**>(frame_list.frames), frame_list.numFrames));
     }
+    rwFree(frame_list.frames);
 
     return clump;
 }

@@ -10,12 +10,70 @@ void export_object_info(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
     writer.Key("Info");
     writer.StartObject();
     writer.Key("NumAtomics");
+    writer.Int(mesh_data.atomics.size());
+    writer.Key("NumGeometries");
     writer.Int(mesh_data.geometries.size());
     writer.Key("NumMaterials");
     writer.Int(mesh_data.materials.size());
+    writer.Key("NumFrames");
+    writer.Int(mesh_data.frames.size());
     writer.Key("Version");
     writer.Int(1);
     writer.EndObject();
+}
+
+void export_object_frames(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
+{
+    writer.Key("Frames");
+    writer.StartArray();
+    for (auto& frame : mesh_data.frames) {
+        writer.StartObject();
+        writer.Key("FrameName");
+        writer.String(frame.name.c_str());
+        writer.Key("ParentID");
+        writer.Int(frame.parent_frame_id);
+        writer.Key("Transform");
+        writer.StartObject();
+        writer.Key("XAxis");
+        writer.StartObject();
+        writer.Key("X");
+        writer.Double(frame.x_axis.x);
+        writer.Key("Y");
+        writer.Double(frame.x_axis.y);
+        writer.Key("Z");
+        writer.Double(frame.x_axis.z);
+        writer.EndObject();
+        writer.Key("YAxis");
+        writer.StartObject();
+        writer.Key("X");
+        writer.Double(frame.y_axis.x);
+        writer.Key("Y");
+        writer.Double(frame.y_axis.y);
+        writer.Key("Z");
+        writer.Double(frame.y_axis.z);
+        writer.EndObject();
+        writer.Key("ZAxis");
+        writer.StartObject();
+        writer.Key("X");
+        writer.Double(frame.z_axis.x);
+        writer.Key("Y");
+        writer.Double(frame.z_axis.y);
+        writer.Key("Z");
+        writer.Double(frame.z_axis.z);
+        writer.EndObject();
+        writer.Key("Position");
+        writer.StartObject();
+        writer.Key("X");
+        writer.Double(frame.pos.x);
+        writer.Key("Y");
+        writer.Double(frame.pos.y);
+        writer.Key("Z");
+        writer.Double(frame.pos.z);
+        writer.EndObject();
+        writer.EndObject();
+        writer.EndObject();
+    }
+    writer.EndArray();
 }
 
 void export_object_materials(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
@@ -154,27 +212,35 @@ void export_geometry_morph_target(JsonWriter& writer, const gta_to_ue::Geometry&
     writer.EndArray();
 }
 
-void export_atomic_geometry(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
+void export_geometries(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
 {
+    writer.Key("Geometry");
+    writer.StartArray();
     for (auto& geometry : mesh_data.geometries) 
     {
-        writer.StartObject();
-        writer.Key("Geometry");
         writer.StartObject();
         export_geometry_info(writer, geometry);
         export_geometry_triangles(writer, geometry);
         export_geometry_tex_coordinate_sets(writer, geometry);
         export_geometry_morph_target(writer, geometry);
         writer.EndObject();
-        writer.EndObject();
     }
+    writer.EndArray();
 }
 
-void export_object_atomic(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
+void export_atomics(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
 {
     writer.Key("Atomic");
     writer.StartArray();
-    export_atomic_geometry(writer, mesh_data);
+    for (auto& atomic : mesh_data.atomics)
+    {
+        writer.StartObject();
+        writer.Key("FrameID");
+        writer.Int(atomic.frame_id);
+        writer.Key("GeometryID");
+        writer.Int(atomic.geometry_id);
+        writer.EndObject();
+    }
     writer.EndArray();
 }
 
@@ -182,8 +248,10 @@ void export_object(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
 {
     writer.StartObject();
     export_object_info(writer, mesh_data);
+    export_object_frames(writer, mesh_data);
     export_object_materials(writer, mesh_data);
-    export_object_atomic(writer, mesh_data);
+    export_geometries(writer, mesh_data);
+    export_atomics(writer, mesh_data);
     writer.EndObject();
 }
 

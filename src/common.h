@@ -86,7 +86,6 @@ namespace gta_to_ue {
         bool has_material_with_hash(size_t hash)
         {
             auto cmp_lambda = [hash](const Material& material) { return material.hash == hash; };
-
             if (const auto result = std::ranges::find_if(*this, cmp_lambda); result == std::end(*this)) {
                 return false;
             }
@@ -105,9 +104,32 @@ namespace gta_to_ue {
         }
     };
 
+    struct Frame
+    {
+        Vector3f x_axis;
+        Vector3f y_axis;
+        Vector3f z_axis;
+        std::string name;
+        Vector3f pos;
+        int32_t parent_frame_id;
+
+        Frame(const Vector3f& in_x_axis, const Vector3f& in_y_axis, const Vector3f& in_z_axis, const Vector3f& in_pos, int32_t in_parent_frame_id, const std::string& in_name);
+    };
+
+    struct Atomic
+    {
+        int32_t geometry_id;
+        int32_t frame_id;
+
+        Atomic(int32_t in_geometry_id, int32_t in_frame_id) :
+            geometry_id(in_geometry_id), frame_id(in_frame_id) {}
+    };
+
     struct Mesh
     {
         std::vector<Geometry> geometries;
+        std::vector<Atomic> atomics;
         MaterialArray materials;
+        std::vector<Frame> frames;
     };
 }

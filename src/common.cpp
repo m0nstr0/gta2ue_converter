@@ -43,3 +43,7 @@ Geometry::Geometry(int32_t num_triangles_to_reserve, int32_t num_tex_coordinates
     tex_coordinate_sets.reserve(num_tex_coordinates_sets_to_reserve);
     morph_targets.reserve(num_morph_targets_to_reserve);
 }
+
+Frame::Frame(const Vector3f& in_x_axis, const Vector3f& in_y_axis, const Vector3f& in_z_axis, const Vector3f& in_pos, int32_t in_parent_frame_id, const std::string& in_name) :
+    x_axis(in_x_axis), y_axis(in_y_axis), z_axis(in_z_axis), pos(in_pos), parent_frame_id(in_parent_frame_id), name(in_name)
+{}
