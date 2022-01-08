@@ -17,9 +17,157 @@ void export_object_info(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
     writer.Int(mesh_data.materials.size());
     writer.Key("NumFrames");
     writer.Int(mesh_data.frames.size());
+    writer.Key("NumAnimHierarchies"); 
+    writer.Int(mesh_data.anim_hierarchy.size());
+    writer.Key("NumSkins");
+    writer.Int(mesh_data.skins.size());
     writer.Key("Version");
     writer.Int(1);
     writer.EndObject();
+}
+
+void export_object_skins(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
+{
+    writer.Key("Skins");
+    writer.StartArray();
+    for (auto& skin : mesh_data.skins) 
+    {
+        writer.StartObject();
+        writer.Key("GeometryID");
+        writer.Int(skin.geometry_id);
+        writer.Key("NumBones");
+        writer.Int(skin.num_bones);
+        writer.Key("NumUsedBones");
+        writer.Int(skin.num_used_bones);
+        writer.Key("MaxWeightsPerVertex");
+        writer.Int(skin.max_weights_per_vertex);
+        writer.Key("UsedBones");
+        writer.StartArray();
+        for (auto& bone : skin.bone_ids) 
+        {
+            writer.StartObject();
+            writer.Key("BoneID");
+            writer.Int(bone);
+            writer.EndObject();
+        }
+        writer.EndArray();
+        writer.Key("Indices");
+        writer.StartArray();
+        for (auto& index : skin.bone_indices) 
+        {
+            writer.StartObject();
+            writer.Key("VertexID");
+            writer.Int(index.vertex_id); //TODO: annd vertex id
+            writer.Key("BoneOne");
+            writer.Int(index.bone1);
+            writer.Key("BoneTwo");
+            writer.Int(index.bone2);
+            writer.Key("BoneThree");
+            writer.Int(index.bone3);
+            writer.Key("BoneFour");
+            writer.Int(index.bone4);
+            writer.EndObject();
+        }
+        writer.EndArray();
+        writer.Key("Weights");
+        writer.StartArray();
+        for (auto& weight : skin.weights) 
+        {
+            writer.StartObject();
+            writer.Key("VertexID");
+            writer.Int(weight.vertex_id); //TODO: annd vertex id
+            writer.Key("WeightOne");
+            writer.Double(weight.weight1);
+            writer.Key("WeightTwo");
+            writer.Double(weight.weight2);
+            writer.Key("WeightThree");
+            writer.Double(weight.weight3);
+            writer.Key("WeightFour");
+            writer.Double(weight.weight4);
+            writer.EndObject();
+        }
+        writer.EndArray();
+        writer.Key("Transform");
+        writer.StartArray();
+        for (auto& transform : skin.inverse_matrices) 
+        {
+            writer.StartObject();
+            writer.Key("XAxis");
+            writer.StartObject();
+            writer.Key("X");
+            writer.Double(transform.x_axis.x);
+            writer.Key("Y");
+            writer.Double(transform.x_axis.y);
+            writer.Key("Z");
+            writer.Double(transform.x_axis.z);
+            writer.EndObject();
+            writer.Key("YAxis");
+            writer.StartObject();
+            writer.Key("X");
+            writer.Double(transform.y_axis.x);
+            writer.Key("Y");
+            writer.Double(transform.y_axis.y);
+            writer.Key("Z");
+            writer.Double(transform.y_axis.z);
+            writer.EndObject();
+            writer.Key("ZAxis");
+            writer.StartObject();
+            writer.Key("X");
+            writer.Double(transform.z_axis.x);
+            writer.Key("Y");
+            writer.Double(transform.z_axis.y);
+            writer.Key("Z");
+            writer.Double(transform.z_axis.z);
+            writer.EndObject();
+            writer.Key("Position");
+            writer.StartObject();
+            writer.Key("X");
+            writer.Double(transform.pos.x);
+            writer.Key("Y");
+            writer.Double(transform.pos.y);
+            writer.Key("Z");
+            writer.Double(transform.pos.z);
+            writer.EndObject();
+            writer.EndObject();
+        }
+        writer.EndArray();
+        writer.EndObject();
+    }
+    writer.EndArray();
+}
+
+void export_object_anim_hierarchies(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
+{
+    writer.Key("AnimHierarchies");
+    writer.StartArray();
+    for (auto& anim_hierarchy : mesh_data.anim_hierarchy) {
+        writer.StartObject();
+        writer.Key("ID");
+        writer.Int(anim_hierarchy.id);
+        writer.Key("FrameID");
+        writer.Int(anim_hierarchy.frame_id);
+        writer.Key("Flags");
+        writer.Int(anim_hierarchy.flags);
+        writer.Key("MaxInterpKeySize");
+        writer.Int(anim_hierarchy.interp_key_size);
+        writer.Key("NumNodes");
+        writer.Int(anim_hierarchy.nodes.size());
+        writer.Key("Nodes");
+        writer.StartArray();
+        for (auto& node : anim_hierarchy.nodes) {
+            writer.StartObject();
+            writer.Key("ID");
+            writer.Int(node.id);
+            writer.Key("Index");
+            writer.Int(node.index);
+            writer.Key("Flags");
+            writer.Int(node.flags);
+            writer.EndObject();
+        }
+        writer.EndArray();
+        writer.EndObject();
+    }
+    writer.EndArray();
 }
 
 void export_object_frames(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
@@ -249,6 +397,8 @@ void export_object(JsonWriter& writer, const gta_to_ue::Mesh& mesh_data)
     writer.StartObject();
     export_object_info(writer, mesh_data);
     export_object_frames(writer, mesh_data);
+    export_object_anim_hierarchies(writer, mesh_data);
+    export_object_skins(writer, mesh_data);
     export_object_materials(writer, mesh_data);
     export_geometries(writer, mesh_data);
     export_atomics(writer, mesh_data);

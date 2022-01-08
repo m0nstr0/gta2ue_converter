@@ -3,6 +3,46 @@
 #include <filesystem>
 #include <iostream>
 
+void parse_rw_skin_data(const rw::Geometry* geometry, int32_t geometry_id, gta_to_ue::Mesh& mesh_data)
+{
+    const rw::Skin* skin = rw::Skin::get(geometry);
+    if (!skin) {
+        return;
+    }
+
+    std::vector<uint8_t> bone_ids;
+    std::vector<gta_to_ue::SkinBoneIndex> bone_indices;
+    std::vector<gta_to_ue::SkinVertexWeight> weights;
+    std::vector<gta_to_ue::SkinBoneTransform> inverse_matrices;
+
+    bone_ids.reserve(skin->numUsedBones);
+    bone_indices.reserve(geometry->numVertices);
+    weights.reserve(geometry->numVertices);
+    inverse_matrices.reserve(skin->numBones);
+  
+    for (int32_t i = 0; i < skin->numUsedBones; i++) {
+        bone_ids.push_back(skin->usedBones[i]);
+    }
+
+    for (int32_t i = 0; i < skin->numBones; i++) {
+        inverse_matrices.emplace_back(
+            gta_to_ue::Vector3f(skin->inverseMatrices[i * 16], skin->inverseMatrices[i * 16 + 4], skin->inverseMatrices[i * 16 + 8]),
+            gta_to_ue::Vector3f(skin->inverseMatrices[i * 16 + 2], skin->inverseMatrices[i * 16 + 6], skin->inverseMatrices[i * 16 + 10]),
+            gta_to_ue::Vector3f(skin->inverseMatrices[i * 16 + 1], skin->inverseMatrices[i * 16 + 5], skin->inverseMatrices[i * 16 + 9]),
+            gta_to_ue::Vector3f(skin->inverseMatrices[i * 16 + 3], skin->inverseMatrices[i * 16 + 7], skin->inverseMatrices[i * 16 + 11])
+        );
+    }
+
+    int32_t weight_index = 0;
+    int32_t index_index = 0;
+    for (int32_t i = 0; i < geometry->numVertices; i++) {
+        weights.emplace_back(i, skin->weights[weight_index++],skin->weights[weight_index++], skin->weights[weight_index++],skin->weights[weight_index++]);
+        bone_indices.emplace_back(i, skin->indices[index_index++], skin->indices[index_index++], skin->indices[index_index++], skin->indices[index_index++]);
+    }
+
+    mesh_data.skins.emplace_back(geometry_id, skin->numBones, skin->numUsedBones, skin->numWeights, bone_ids, bone_indices, weights, inverse_matrices);
+}
+
 void parse_rw_frames(const rw::FrameList_& frame_list, gta_to_ue::Mesh& mesh_data)
 {
     mesh_data.frames.reserve(frame_list.numFrames);
@@ -15,6 +55,20 @@ void parse_rw_frames(const rw::FrameList_& frame_list, gta_to_ue::Mesh& mesh_dat
             rw::findPointer(frame_list.frames[i]->getParent(), reinterpret_cast<void**>(frame_list.frames), frame_list.numFrames),
             gta::getNodeName(frame_list.frames[i])
         );
+
+        if (const rw::HAnimData* h_anim_data = rw::HAnimData::get(frame_list.frames[i]); h_anim_data->id >= 0) {
+            std::vector<gta_to_ue::AnimHierarchyNode> anim_hierarchy_nodes;
+            int32_t interp_key_size = 0;
+            int32_t flags = 0;
+            if (h_anim_data->hierarchy) {
+                for (int32_t j = 0; j != h_anim_data->hierarchy->numNodes; j++) {
+                    anim_hierarchy_nodes.emplace_back(h_anim_data->hierarchy->nodeInfo[j].id, h_anim_data->hierarchy->nodeInfo[j].index, h_anim_data->hierarchy->nodeInfo[j].flags);
+                }
+                interp_key_size = h_anim_data->hierarchy->interpolator->maxInterpKeyFrameSize;
+                flags = h_anim_data->hierarchy->flags;
+            }
+            mesh_data.anim_hierarchy.emplace_back(mesh_data.frames.size() - 1, h_anim_data->id, flags, interp_key_size, anim_hierarchy_nodes);
+        }
     }
 }
 
@@ -91,6 +145,7 @@ void parse_rw_geometry(const rw::Geometry* geometry, gta_to_ue::Mesh& mesh_data,
     const rw::Mesh* meshes = geometry->meshHeader->getMeshes();
 
     parse_rw_materials(geometry, mesh_data, filename);
+    parse_rw_skin_data(geometry, mesh_data.geometries.size() - 1,mesh_data);
 
     if (geometry->meshHeader->flags == rw::MeshHeader::TRISTRIP) {
         for (int32_t i = 0; i < geometry->meshHeader->numMeshes; i++) {
